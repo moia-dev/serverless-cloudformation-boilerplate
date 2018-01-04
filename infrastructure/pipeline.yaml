@@ -82,7 +82,7 @@ Resources:
           Configuration:
             ActionMode: CREATE_UPDATE
             StackName: app-userpool
-            TemplatePath: SourceArtifact::infrastructure/app-userpool.yml
+            TemplatePath: SourceArtifact::infrastructure/app-userpool.yaml
             RoleArn: !GetAtt CloudFormationInfrastructureRole.Arn
           RunOrder: 1
         - Name: ServerlessDeploy

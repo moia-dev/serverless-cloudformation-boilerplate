@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: someuserpool
+
+Outputs:
+  UserPoolArn:
+    Value: !GetAtt UserPool.Arn
