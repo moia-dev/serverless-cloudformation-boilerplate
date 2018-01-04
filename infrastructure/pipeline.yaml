@@ -136,4 +136,12 @@ Resources:
         Type: LINUX_CONTAINER
       Source:
         Type: CODEPIPELINE
-        BuildSpec: codebuild/buildspec_deploy.yml
+        BuildSpec: |
+          version: 0.2
+          phases:
+              install:
+                 commands:
+                  - npm install -g serverless@1.25.0
+              build:
+                commands:
+                  - 'serverless deploy'
