@@ -32,6 +32,15 @@ Resources:
           Action: sts:AssumeRole
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/PowerUserAccess
+      Policies:
+      - PolicyName: AllowToPassRoleToCodeBuild
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Action:
+            - iam:PassRole
+            Resource: !GetAtt CloudFormationInfrastructureRole.Arn
+            Effect: Allow
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
