@@ -66,20 +66,6 @@ Resources:
           RunOrder: 1
       - Name: InfrastructureDeploy
         Actions:
-        - Name: DeployAppDatabases
-          InputArtifacts:
-          - Name: SourceArtifact
-          ActionTypeId:
-            Category: Deploy
-            Owner: AWS
-            Provider: CloudFormation
-            Version: 1
-          Configuration:
-            ActionMode: CREATE_UPDATE
-            StackName: app-databases
-            TemplatePath: SourceArtifact::infrastructure/app-databases.yml
-            RoleArn: !GetAtt CloudFormationInfrastructureRole.Arn
-          RunOrder: 1
         - Name: DeployAppUserPool
           InputArtifacts:
           - Name: SourceArtifact
@@ -106,7 +92,7 @@ Resources:
           - Name: DeployArtifact
           Configuration:
             ProjectName: !Ref ServerlessDeploy
-          RunOrder: 1
+          RunOrder: 2
       ArtifactStore:
         Type: S3
         Location: !Ref CodePipelineBucket
