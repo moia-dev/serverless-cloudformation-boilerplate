@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  GitHubUser:
+    Type: String
+  GitHubToken:
+    Type: String
+    NoEcho: true
+  GitHubRepoName:
+    Type: String
+  GitHubBranchName:
+    Type: String
+
+Resources:
+
+  CodePipelineBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags:
+      - Key: Name
+        Value: CodePipeline-S3Bucket
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Sid: 1
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      Stages:
+      - Name: Source
+        Actions:
+        - Name: ApplicationSource
+          InputArtifacts: []
+          ActionTypeId:
+            Version: '1'
+            Category: Source
+            Owner: ThirdParty
+            Provider: GitHub
+          OutputArtifacts:
+          - Name: SourceArtifact
+          Configuration:
+            Owner: !Ref GitHubUser
+            Repo: !Ref GitHubRepoName
+            Branch: !Ref GitHubBranchName
+            OAuthToken: !Ref GitHubToken
+          RunOrder: 1
+      - Name: InfrastructureDeploy
+        Actions:
+        - Name: DeployAppDatabases
+          InputArtifacts:
+          - Name: SourceArtifact
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: 1
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            StackName: app-databases
+            TemplatePath: SourceArtifact::infrastructure/app-databases.yml
+            RoleArn: !GetAtt CloudFormationInfrastructureRole.Arn
+          RunOrder: 1
+        - Name: DeployAppUserPool
+          InputArtifacts:
+          - Name: SourceArtifact
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: 1
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            StackName: app-userpool
+            TemplatePath: SourceArtifact::infrastructure/app-userpool.yml
+            RoleArn: !GetAtt CloudFormationInfrastructureRole.Arn
+          RunOrder: 1
+        - Name: ServerlessDeploy
+          InputArtifacts:
+          - Name: SourceArtifact
+          ActionTypeId:
+            Category: Build
+            Owner: AWS
+            Version: 1
+            Provider: CodeBuild
+          OutputArtifacts:
+          - Name: DeployArtifact
+          Configuration:
+            ProjectName: !Ref ServerlessDeploy
+          RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Ref CodePipelineBucket
+
+  CloudFormationInfrastructureRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: cloudformation.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+
+  ServerlessDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/PowerUserAccess
+
+  ServerlessDeploy:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "serverless-deployment-${AWS::StackName}"
+      ServiceRole: !Ref ServerlessDeployRole
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/eb-nodejs-6.10.0-amazonlinux-64:4.0.0
+        Type: LINUX_CONTAINER
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: codebuild/buildspec_deploy.yml

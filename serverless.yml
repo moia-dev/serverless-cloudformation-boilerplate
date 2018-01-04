@@ -1,0 +1,22 @@
+# A minimal Serverless.yml which shows how to reference resources in CloudFormation stacks mananged outside of serverless
+service: serverless-cloudformation
+
+custom:
+  userPoolArn: ${cf:app-userpool.UserPoolArn}
+
+
+provider:
+  name: aws
+  runtime: python3.6
+  stage: ${opt:stage}
+
+functions:
+  index:
+    handler: handler.index
+    timeout: 12
+    events:
+      - http:
+          path: /
+          method: get
+          authorizer:
+           arn: ${self:custom.userPoolArn}
