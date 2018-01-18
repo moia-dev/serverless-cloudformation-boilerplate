@@ -7,7 +7,6 @@ custom:
 provider:
   name: aws
   runtime: python3.6
-  region: ${env:AWS_REGION} # work around https://github.com/serverless/serverless/issues/3947
 
 functions:
   index:
