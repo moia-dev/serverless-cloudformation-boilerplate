@@ -4,7 +4,6 @@ service: serverless-cloudformation
 custom:
   userPoolArn: ${cf:app-userpool.UserPoolArn}
 
-
 provider:
   name: aws
   runtime: python3.6
