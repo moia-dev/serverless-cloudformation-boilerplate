@@ -1,4 +1,4 @@
-# A minimal Serverless.yml which shows how to reference resources in CloudFormation stacks mananged outside of serverless
+# A minimal serverless.yml which shows how to reference resources in CloudFormation stacks managed outside of serverless.yml
 service: serverless-cloudformation
 
 custom:
