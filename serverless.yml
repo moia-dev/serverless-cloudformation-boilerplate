@@ -11,7 +11,6 @@ provider:
 functions:
   index:
     handler: handler.index
-    timeout: 12
     events:
       - http:
           path: /
